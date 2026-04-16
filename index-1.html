@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Калькулятор</title>
+<link rel="manifest" href="manifest.json">
+<meta name="theme-color" content="#ff5000">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Калькулятор">
+<link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@300;400;500&family=Bebas+Neue&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: #0a0a0a;
+    font-family: 'DM Mono', monospace;
+    overflow: hidden;
+  }
+
+  body::before {
+    content: '';
+    position: fixed;
+    inset: 0;
+    background:
+      radial-gradient(ellipse 60% 50% at 20% 30%, rgba(255,80,0,0.08) 0%, transparent 60%),
+      radial-gradient(ellipse 50% 60% at 80% 70%, rgba(255,180,0,0.06) 0%, transparent 60%);
+    pointer-events: none;
+  }
+
+  .calc-wrap {
+    position: relative;
+    animation: fadeUp 0.6s cubic-bezier(0.16, 1, 0.3, 1) both;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .owner-name {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 28px;
+    letter-spacing: 0.25em;
+    color: #ff5000;
+    text-shadow: 0 0 20px rgba(255, 80, 0, 0.4);
+    text-transform: uppercase;
+  }
+
+  @keyframes fadeUp {
+    from { opacity: 0; transform: translateY(30px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+
+  .calc {
+    width: 320px;
+    background: #111;
+    border: 1px solid #222;
+    border-radius: 24px;
+    overflow: hidden;
+    box-shadow:
+      0 0 0 1px #1a1a1a,
+      0 40px 80px rgba(0,0,0,0.8),
+      0 0 60px rgba(255,80,0,0.04);
+  }
+
+  /* Display */
+  .display {
+    padding: 28px 24px 20px;
+    background: #0d0d0d;
+    border-bottom: 1px solid #1c1c1c;
+    min-height: 130px;
+    display: flex;
+    flex-direction: column;
+    justify-content: flex-end;
+    align-items: flex-end;
+    gap: 6px;
+    position: relative;
+  }
+
+  .display::after {
+    content: '';
+    position: absolute;
+    bottom: 0; left: 0; right: 0;
+    height: 1px;
+    background: linear-gradient(90deg, transparent, rgba(255,80,0,0.3), transparent);
+  }
+
+  .expr {
+    font-family: 'DM Mono', monospace;
+    font-size: 13px;
+    color: #444;
+    letter-spacing: 0.05em;
+    min-height: 18px;
+    word-break: break-all;
+    text-align: right;
+    transition: color 0.2s;
+  }
+
+  .result {
+    font-family: 'Bebas Neue', sans-serif;
+    font-size: 56px;
+    color: #f5f5f5;
+    letter-spacing: 0.02em;
+    line-height: 1;
+    transition: all 0.15s ease;
+    word-break: break-all;
+    text-align: right;
+  }
+
+  .result.flash {
+    color: #ff5000;
+    transform: scale(1.03);
+  }
+
+  /* Buttons grid */
+  .buttons {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1px;
+    background: #1a1a1a;
+  }
+
+  button {
+    border: none;
+    cursor: pointer;
+    font-family: 'DM Mono', monospace;
+    font-size: 16px;
+    font-weight: 400;
+    padding: 0;
+    height: 72px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: background 0.1s, transform 0.08s, color 0.1s;
+    position: relative;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+    letter-spacing: 0.03em;
+  }
+
+  button:active {
+    transform: scale(0.92);
+  }
+
+  /* Number buttons */
+  .btn-num {
+    background: #161616;
+    color: #d0d0d0;
+  }
+  .btn-num:hover { background: #1e1e1e; color: #fff; }
+
+  /* Zero (wide) */
+  .btn-zero {
+    grid-column: span 2;
+    justify-content: flex-start;
+    padding-left: 28px;
+  }
+
+  /* Operator buttons */
+  .btn-op {
+    background: #1a1a1a;
+    color: #ff7a30;
+    font-size: 20px;
+  }
+  .btn-op:hover { background: #222; color: #ff9a60; }
+
+  /* Function buttons (top row) */
+  .btn-fn {
+    background: #141414;
+    color: #888;
+    font-size: 13px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+  .btn-fn:hover { background: #1c1c1c; color: #bbb; }
+
+  /* Equals */
+  .btn-eq {
+    background: #ff5000;
+    color: #fff;
+    font-size: 22px;
+  }
+  .btn-eq:hover { background: #ff6820; }
+  .btn-eq:active { background: #e04500; }
+
+  /* Decimal */
+  .btn-dot {
+    background: #161616;
+    color: #888;
+    font-size: 22px;
+    font-weight: 300;
+  }
+  .btn-dot:hover { background: #1e1e1e; color: #bbb; }
+
+  /* Error state */
+  .result.error { color: #ff3333; font-size: 28px; }
+</style>
+</head>
+<body>
+
+<div class="calc-wrap">
+  <div class="owner-name">Jamoliddin</div>
+  <div class="calc">
+    <div class="display">
+      <div class="expr" id="expr"></div>
+      <div class="result" id="result">0</div>
+    </div>
+    <div class="buttons">
+      <!-- Row 1 -->
+      <button class="btn-fn" data-action="clear">AC</button>
+      <button class="btn-fn" data-action="sign">+/−</button>
+      <button class="btn-fn" data-action="percent">%</button>
+      <button class="btn-op" data-action="op" data-val="÷">÷</button>
+      <!-- Row 2 -->
+      <button class="btn-num" data-action="num" data-val="7">7</button>
+      <button class="btn-num" data-action="num" data-val="8">8</button>
+      <button class="btn-num" data-action="num" data-val="9">9</button>
+      <button class="btn-op" data-action="op" data-val="×">×</button>
+      <!-- Row 3 -->
+      <button class="btn-num" data-action="num" data-val="4">4</button>
+      <button class="btn-num" data-action="num" data-val="5">5</button>
+      <button class="btn-num" data-action="num" data-val="6">6</button>
+      <button class="btn-op" data-action="op" data-val="−">−</button>
+      <!-- Row 4 -->
+      <button class="btn-num" data-action="num" data-val="1">1</button>
+      <button class="btn-num" data-action="num" data-val="2">2</button>
+      <button class="btn-num" data-action="num" data-val="3">3</button>
+      <button class="btn-op" data-action="op" data-val="+">+</button>
+      <!-- Row 5 -->
+      <button class="btn-num btn-zero" data-action="num" data-val="0">0</button>
+      <button class="btn-dot" data-action="dot">.</button>
+      <button class="btn-eq" data-action="equals">=</button>
+    </div>
+  </div>
+</div>
+
+<script>
+  const resultEl = document.getElementById('result');
+  const exprEl   = document.getElementById('expr');
+
+  let current  = '0';
+  let prev     = null;
+  let operator = null;
+  let newInput = false;
+  let lastExpr = '';
+
+  function updateDisplay(flash = false) {
+    // Trim long numbers
+    let display = current;
+    if (!isNaN(current) && current !== 'Ошибка') {
+      let num = parseFloat(current);
+      if (Math.abs(num) >= 1e12) display = num.toExponential(4);
+      else if (display.length > 10 && !display.includes('.')) display = display.slice(0, 10);
+    }
+    resultEl.textContent = display;
+    resultEl.className = 'result' + (current === 'Ошибка' ? ' error' : '');
+    if (flash) {
+      resultEl.classList.add('flash');
+      setTimeout(() => resultEl.classList.remove('flash'), 150);
+    }
+    exprEl.textContent = lastExpr;
+  }
+
+  function calc(a, op, b) {
+    a = parseFloat(a); b = parseFloat(b);
+    switch(op) {
+      case '+': return a + b;
+      case '−': return a - b;
+      case '×': return a * b;
+      case '÷': return b === 0 ? null : a / b;
+    }
+  }
+
+  function fmt(n) {
+    if (n === null) return 'Ошибка';
+    let s = parseFloat(n.toPrecision(12)).toString();
+    return s;
+  }
+
+  document.querySelector('.buttons').addEventListener('click', e => {
+    const btn = e.target.closest('button');
+    if (!btn) return;
+    const action = btn.dataset.action;
+    const val    = btn.dataset.val;
+
+    switch(action) {
+      case 'num':
+        if (current === 'Ошибка') { current = val; newInput = false; break; }
+        if (newInput || current === '0') { current = val; newInput = false; }
+        else if (current.replace('-','').length < 12) current += val;
+        break;
+
+      case 'dot':
+        if (newInput) { current = '0.'; newInput = false; break; }
+        if (!current.includes('.')) current += '.';
+        break;
+
+      case 'op':
+        if (current === 'Ошибка') break;
+        if (prev !== null && !newInput) {
+          let res = calc(prev, operator, current);
+          lastExpr = prev + ' ' + operator + ' ' + current + ' =';
+          current = fmt(res);
+          prev = null; operator = null; newInput = true;
+          updateDisplay(true);
+        }
+        prev = current; operator = val; newInput = true;
+        lastExpr = current + ' ' + val;
+        updateDisplay();
+        return;
+
+      case 'equals':
+        if (prev === null || operator === null || current === 'Ошибка') break;
+        let res = calc(prev, operator, current);
+        lastExpr = prev + ' ' + operator + ' ' + current + ' =';
+        current = fmt(res);
+        prev = null; operator = null; newInput = true;
+        updateDisplay(true);
+        return;
+
+      case 'clear':
+        current = '0'; prev = null; operator = null; newInput = false; lastExpr = '';
+        break;
+
+      case 'sign':
+        if (current !== '0' && current !== 'Ошибка')
+          current = current.startsWith('-') ? current.slice(1) : '-' + current;
+        break;
+
+      case 'percent':
+        if (current !== 'Ошибка') current = fmt(parseFloat(current) / 100);
+        break;
+    }
+
+    updateDisplay();
+  });
+
+  // Keyboard support
+  document.addEventListener('keydown', e => {
+    const map = {
+      '0':'0','1':'1','2':'2','3':'3','4':'4',
+      '5':'5','6':'6','7':'7','8':'8','9':'9',
+      '.': 'dot', ',': 'dot',
+      '+': '+', '-': '−', '*': '×', '/': '÷',
+      'Enter': 'equals', '=': 'equals',
+      'Backspace': 'back', 'Escape': 'clear', '%': 'percent'
+    };
+    const k = map[e.key];
+    if (!k) return;
+    e.preventDefault();
+    if ('0123456789'.includes(k)) {
+      document.querySelector(`[data-val="${k}"]`)?.click();
+    } else if (['+','−','×','÷'].includes(k)) {
+      document.querySelector(`[data-val="${k}"]`)?.click();
+    } else if (k === 'dot') {
+      document.querySelector('[data-action="dot"]')?.click();
+    } else if (k === 'equals') {
+      document.querySelector('[data-action="equals"]')?.click();
+    } else if (k === 'clear') {
+      document.querySelector('[data-action="clear"]')?.click();
+    } else if (k === 'percent') {
+      document.querySelector('[data-action="percent"]')?.click();
+    } else if (k === 'back') {
+      if (current !== 'Ошибка' && !newInput && current.length > 1)
+        current = current.slice(0, -1);
+      else current = '0';
+      updateDisplay();
+    }
+  });
+
+  updateDisplay();
+
+  // Register Service Worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('sw.js');
+  }
+</script>
+</body>
+</html>
