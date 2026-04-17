@@ -1,8 +1,8 @@
 {
-  "name": "Калькулятор — Jamoliddin",
-  "short_name": "Калькулятор",
-  "description": "Красивый калькулятор от Jamoliddin",
-  "start_url": "/index.html",
+  "name": "JCalculator",
+  "short_name": "JCalc",
+  "description": "Calculator by Jamoliddin",
+  "start_url": "/JCalculatorr/index.html",
   "display": "standalone",
   "background_color": "#0a0a0a",
   "theme_color": "#ff5000",
